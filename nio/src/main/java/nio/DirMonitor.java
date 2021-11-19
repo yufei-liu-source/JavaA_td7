@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.NonReadableChannelException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -43,16 +43,34 @@ public class DirMonitor {
 		return size;
 	}
 	
-	public void mostRecent(File directory) {
-		File[] files = directory.listFiles();
-		Arrays.sort(files, new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-
-				return (int)(o2.lastModified() - o1.lastModified());
+//	public void mostRecent(File directory) {
+//		File[] files = directory.listFiles();
+//		Arrays.sort(files, new Comparator<File>() {
+//			@Override
+//			public int compare(File o1, File o2) {
+//
+//				return (int)(o2.lastModified() - o1.lastModified());
+//			}
+//		});
+//		System.out.println(files[0].getName());
+//	}
+	
+	public Path mostRecent() throws IOException {
+		BasicFileAttributes attr;
+		Path path = Paths.get(".");
+		long time = 0;
+		long temp;
+		DirectoryStream<Path> paths = Files.newDirectoryStream(this.path);
+		for(Path p : paths) {
+			attr = Files.readAttributes(p, BasicFileAttributes.class);
+			FileTime fileTime = attr.lastModifiedTime();
+			temp = fileTime.toMillis();
+			if(temp>time) {
+				path = p;
+				time = temp;
 			}
-		});
-		System.out.println(files[0].getName());
+		}
+		return path;
 	}
 	
 
