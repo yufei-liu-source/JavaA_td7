@@ -12,8 +12,8 @@ public class Main {
         //File f = p.toFile();
         try {
             DirMonitor dm = new DirMonitor(p);
-            dm.showAll();
-            System.out.println(dm.sizeOfFiles());
+            dm.showAll3(10);
+            System.out.println(dm.sizeOfFiles2(1596));
             System.out.println(dm.mostRecent());
             //dm.mostRecent(f);
         } catch (IOException e) {

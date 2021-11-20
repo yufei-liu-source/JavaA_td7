@@ -1,14 +1,15 @@
 package nio;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+//import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.channels.NonReadableChannelException;
+//import java.nio.channels.NonReadableChannelException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Arrays;
+//import java.util.Comparator;
 import java.util.Iterator;
 
 public class DirMonitor {
@@ -17,13 +18,25 @@ public class DirMonitor {
 
 	public DirMonitor(Path path) throws IOException {
 		this.path = path;
-		if(!Files.isReadable(path)){
-			throw new NonReadableChannelException();
-		}else if(!Files.isDirectory(path)) {
-			throw new FileNotFoundException();
+		if(!Files.isReadable(path) || !Files.isDirectory(path)) {
+			throw new IOException("Path can't be used");
 		}
 	}
 	
+	//inner class
+//	public class PrefixFilter implements DirectoryStream.Filter<Path> {
+//		private long size;
+//
+//		public PrefixFilter(long size) {
+//			this.size = size;
+//		}
+//
+//		@Override
+//		public boolean accept(Path entry) throws IOException {
+//			return entry.toFile().length() >= size;
+//		}
+//	}
+
 	public void showAll() throws IOException{
 		try (DirectoryStream<Path> ds = Files.newDirectoryStream(this.path)){
 			Iterator<Path> iterator = ds.iterator();
@@ -34,6 +47,45 @@ public class DirMonitor {
 		}
 	}
 	
+	public void showAll2() throws IOException{
+		final long minsize = 1;
+		try (DirectoryStream<Path> ds = Files.newDirectoryStream(this.path, new DirectoryStream.Filter<Path>() {
+			@Override
+			public boolean accept(Path entry) throws IOException {
+				return Files.size(entry) >= minsize;
+			}
+		})){
+			Iterator<Path> iterator = ds.iterator();
+			while (iterator.hasNext()) {
+				Path p = iterator.next();
+				System.out.println(p);
+			}
+		}
+	}
+	
+	// Anonymous class
+	public void showAll3(final long size) throws IOException{
+		DirectoryStream<Path> paths = Files.newDirectoryStream(this.path);
+		for(Path p : paths) {
+			this.applyAction(p, new MyAction() {
+				public void perform(Path path) throws IOException {
+					// TODO Auto-generated method stub
+						System.out.println(path);
+				}
+
+				@Override
+				public Long getSize() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+			}, size);
+		}
+	}
+	
+	public void applyAction(Path p, MyAction action, long size) throws IOException{
+		if (Files.size(p)>= size) action.perform(p);
+	}
+	
 	public long sizeOfFiles() throws IOException {
 		long size = 0;
 		DirectoryStream<Path> ds = Files.newDirectoryStream(this.path);
@@ -42,7 +94,31 @@ public class DirMonitor {
 		}
 		return size;
 	}
-	
+
+	public long sizeOfFiles2(final long minsize) throws IOException {
+		MyAction ma = new MyAction(){
+			
+			long size;
+			
+			@Override
+			public void perform(Path p) throws IOException {
+				// TODO Auto-generated method stub
+				size += Files.size(p);
+			}
+			
+			public Long getSize() {			           
+				return size;
+			}
+			 
+		};
+		
+		DirectoryStream<Path> paths = Files.newDirectoryStream(this.path);
+		for(Path p : paths) {
+			this.applyAction(p, ma, minsize);
+		}
+		return (long) ma.getSize();
+	}
+
 //	public void mostRecent(File directory) {
 //		File[] files = directory.listFiles();
 //		Arrays.sort(files, new Comparator<File>() {
@@ -56,23 +132,43 @@ public class DirMonitor {
 //	}
 	
 	public Path mostRecent() throws IOException {
-		BasicFileAttributes attr;
-		Path path = Paths.get(".");
-		long time = 0;
-		long temp;
-		DirectoryStream<Path> paths = Files.newDirectoryStream(this.path);
-		for(Path p : paths) {
-			attr = Files.readAttributes(p, BasicFileAttributes.class);
-			FileTime fileTime = attr.lastModifiedTime();
-			temp = fileTime.toMillis();
-			if(temp>time) {
-				path = p;
-				time = temp;
+		File[] files = this.path.toFile().listFiles();
+		Arrays.sort(files, new Comparator<File>() {
+			
+			@Override
+			public int compare(File o1, File o2) {
+				// TODO Auto-generated method stub
+				return (int)(o2.lastModified() - o1.lastModified());
 			}
-		}
-		return path;
+			
+		});
+		return files[0].toPath();
 	}
 	
+	public Path mostRecent2(long minsize) throws IOException {
+		
+		MyAction ma = new MyAction(){	
+			File[] files = this.getPath().toFile().listFiles();
+			@Override
+			public void perform(Path p) throws IOException {
+				// TODO Auto-generated method stub
+				Arrays.sort(files, new Comparator<File>() {
+					
+					@Override
+					public int compare(File o1, File o2) {
+						// TODO Auto-generated method stub
+						return (int)(o2.lastModified() - o1.lastModified());
+					}
+					
+				});
+			}
+					
+			public Object getSize() {			           
+				return files[0].toPath();
+			}
+		};
+		return (Path) ma.getSize();
+	}
 
 	public Path getPath() {
 		return path;
