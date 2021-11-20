@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.IOException;
 //import java.nio.channels.NonReadableChannelException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.Comparator;
 import java.util.Arrays;
 //import java.util.Comparator;
@@ -106,7 +104,7 @@ public class DirMonitor {
 				size += Files.size(p);
 			}
 			
-			public Long getSize() {			           
+			public Long valeur() {			           
 				return size;
 			}
 			 
@@ -116,7 +114,7 @@ public class DirMonitor {
 		for(Path p : paths) {
 			this.applyAction(p, ma, minsize);
 		}
-		return (long) ma.getSize();
+		return (long) ma.valeur();
 	}
 
 //	public void mostRecent(File directory) {
@@ -148,7 +146,7 @@ public class DirMonitor {
 	public Path mostRecent2(long minsize) throws IOException {
 		
 		MyAction ma = new MyAction(){	
-			File[] files = this.getPath().toFile().listFiles();
+			File[] files = path.toFile().listFiles();
 			@Override
 			public void perform(Path p) throws IOException {
 				// TODO Auto-generated method stub
@@ -158,17 +156,17 @@ public class DirMonitor {
 					public int compare(File o1, File o2) {
 						// TODO Auto-generated method stub
 						return (int)(o2.lastModified() - o1.lastModified());
-					}
-					
+					}	
 				});
 			}
 					
-			public Object getSize() {			           
+			public Object valeur() {			           
 				return files[0].toPath();
 			}
 		};
-		return (Path) ma.getSize();
+		return (Path) ma.valeur();
 	}
+	
 
 	public Path getPath() {
 		return path;
