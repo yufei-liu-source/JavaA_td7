@@ -72,7 +72,7 @@ public class DirMonitor {
 				}
 
 				@Override
-				public Long getSize() {
+				public Long valeur() {
 					// TODO Auto-generated method stub
 					return null;
 				}
